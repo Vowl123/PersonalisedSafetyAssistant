@@ -277,3 +277,6 @@ __pycache__/
 # Cake - Uncomment if you are using it
 # tools/**
 # !tools/packages.config
+PersonalisedSafetyAssistant.sln
+*.vcxproj
+PersonalisedSafetyAssistant/PersonalisedSafetyAssistant.vcxproj.filters
