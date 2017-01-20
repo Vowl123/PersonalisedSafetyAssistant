@@ -1,0 +1,15 @@
+{
+  "name": "node",
+  "version": "1.0.0",
+  "author": "David Ralph <David.Ralph@myport.ac.uk>",
+  "dependencies": {
+    "fs": "0.0.1-security",
+    "mongoose": "4.7.7",
+    "mongoose-gridfs": "0.1.0",
+    "path": "0.12.7"
+  },
+  "scripts": {
+    "start": "node main.js"
+  },
+  "repository": "https://github.com/Vowl123/PersonalisedSafetyAssistant"
+}

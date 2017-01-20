@@ -1,0 +1,5 @@
+{
+    "DB_URL": "mongodb://localhost/test",
+    "PHOTO_STORE_PATH": "../loginFiles",
+    "USERS_FILE_PATH": "../loginFiles/index.txt"
+}
