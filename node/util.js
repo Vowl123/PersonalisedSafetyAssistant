@@ -8,6 +8,13 @@ const config = require('./config');
 const PHOTO_STORE_PATH = config.PHOTO_STORE_PATH;
 const USERS_FILE_PATH = config.USERS_FILE_PATH;
 
+// Make sure photo directory exists
+try {
+    if (!fs.existsSync(PHOTO_STORE_PATH)) fs.mkdirSync(PHOTO_STORE_PATH);
+} catch (err) {
+    console.error('Could not verify photo path:\n', err);
+}
+
 exports.createProfile = createProfile;
 exports.pullLoginFiles = pullLoginFiles;
 exports.getProfiles = getProfiles;
@@ -23,19 +30,25 @@ exports.getProfiles = getProfiles;
  */
 function createProfile(photos) {
 
-    // TODO - expand on profile content
+    console.log('\nCreating profile with photos:\n', photos.join('\n'));
+
+    // Create profile document
     var profile = profileDB();
 
+    // Upload photos
     var tasks = photos.map(uploadPhoto);
+    return Promise.all(tasks)
 
-    return Promise.all(tasks).then(photoIDs => {
-        console.log('Saving profile with photoIDs:', photoIDs);
-        profile.photos = photoIDs;
-        profile.save((err, res) => {
-            if (err) return Promise.reject(err);
-            return Promise.resolve(res);
+        // ID or undefined
+        .then(res => res.map(doc => doc !== undefined ? doc._id : undefined))
+
+        // Attatch to profile & save
+        .then(ids => {
+            profile.photos = ids;
+            profile.save();
+            console.log('\nCreated profile:\n', profile);
+            return profile;
         });
-    });
 }
 
 /**
@@ -44,21 +57,21 @@ function createProfile(photos) {
  * Will always resolve (safe to use with Promise.All)
  */
 function uploadPhoto(filepath) {
-    return new Promise((resolve, reject) => {
+    // Create document with Meta-data
+    var photo = new photoDB({
+        filename: path.basename(filepath),
+        contentType: 'binary'
+    });
 
-        // Create document with Meta-data
-        var photo = new photoDB({
-            filename: path.basename(filepath),
-            contentType: 'image'
-        });
+    // Read file from disk
+    var stream = fs.createReadStream(filepath);
 
-        // Upload file contents
-        photo.write(
-            fs.createReadStream(filepath),
-            (err, res) => {
-            // Always resolve even if failed to save,
-            // this is nessesary for Promise.All to continue if one fails.
-            resolve(err || res._id);
+    // Promise to upload file contents
+    return new Promise(function (resolve, reject) {
+        photo.write(stream, (err, res) => {
+            // Always resolve
+            if (err !== null) console.error(err);
+            resolve(res || err);
         });
     });
 }
@@ -73,8 +86,12 @@ function uploadPhoto(filepath) {
  * except those of knownProfiles.
  */
 function pullLoginFiles(knownProfiles) {
+    console.log('Pulling missing profiles');
     return getProfiles(knownProfiles)
         .then(profiles => Promise.all(profiles.map(downloadPhotos)))
+        .then(() => {
+            console.log('Missing profiles cached');
+        })
         .catch(console.error);
 }
 
@@ -83,14 +100,7 @@ function pullLoginFiles(knownProfiles) {
  * with an id not in ignoreIDs.
  */
 function getProfiles(ignoreIDs) {
-    var query = {_id: {$nin: ignoreIDs}};
-
-    return new Promise((resolve, reject) => {
-        profileDB.find(query, (err, res) => {
-            if (err) reject(err);
-            else resolve(res);
-        });
-    });
+    return profileDB.find({_id: {$nin: ignoreIDs}});
 }
 
 /**
@@ -99,19 +109,12 @@ function getProfiles(ignoreIDs) {
  * profile should be an instance of Profile schema.
  */
 function downloadPhotos(profile) {
-    var query = {_id: {$in: profile.photos}};
-
-    return new Promise((resolve, reject) => {
-        photoDB.find(query, (err, res) => {
-            if (err) return reject(err);
-
-            var tasks = [];
-            for (var i = 0; i < res.length; i++) {
-                tasks.push(savePhotoForLogin(profile._id, res[i]));
-            }
-            return Promise.all(tasks).then(resolve);
+    return photoDB
+        .find({_id: {$in: profile.photos}})
+        .then(res => {
+            var task = savePhotoForLogin.bind(null, profile._id);
+            return Promise.all(res.map(task));
         });
-    });
 }
 
 /**
@@ -121,38 +124,15 @@ function downloadPhotos(profile) {
  */
 function savePhotoForLogin(profileID, photo) {
 
-    // Download / Save image
-    return streamToFile(
-        path.join(PHOTO_STORE_PATH, photo.filename),
-        photo.read())
+    var filepath = path.join(PHOTO_STORE_PATH, photo.filename);
+    var writestream = fs.createWriteStream(filepath);
+
+    // Download & Save
+    photo.read().pipe(writestream);
+    writestream.on('finish', () => {
 
         // Append to profile index file
-        .then(msg => {
-            var nline = photo.filename + " " + profileID;
-            fs.appendFile(USERS_FILE_PATH, nline);
-            return msg;
-        })
-        // Always resolve even if failed to save,
-        // this is nessesary for Promise.All to continue if one fails.
-        .catch(Promise.resolve);
-}
-
-/**
- * Returns a promose to write data from stream to filepath.
- * filepath should include the filename and extension.
- */
-function streamToFile(filepath, stream) {
-    return new Promise((resolve, reject) => {
-
-        var chunks = [];
-        stream.on('data', chunks.push);
-
-        stream.on('end', function () {
-            var buffer = Buffer.concat(chunks);
-            fs.writeFile(filepath, buffer, function (err) {
-                if (err) reject(err);
-                resolve('Saved Image: ' + filepath);
-            });
-        });
+        var nline = filepath + ";" + profileID + "\n";
+        fs.appendFile(USERS_FILE_PATH, nline);
     });
 }

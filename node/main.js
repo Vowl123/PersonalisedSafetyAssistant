@@ -1,14 +1,16 @@
+// Wait for database connection
+require('./models').connect(function () {
+    const fs = require('fs');
+    const util = require('./util');
 
-const fs = require('fs');
-const util = require('./util');
+    const localProfiles = [];
 
-const localProfiles = [];
+//    // TESTING - Creates profile from images in loginFiles/new
+//    const newProfileImages =
+//        fs.readdirSync('../loginFiles/new')
+//        .map(fname => '../loginFiles/new/' + fname);
+//    util.createProfile(newProfileImages);
 
-
-// TESTING
-const newProfileImages = fs.readdirSync('../loginFiles/new');
-util.createProfile(newProfileImages)
-    .then(console.log)
-    .catch(console.error);
-
-//util.pullLoginFiles(localProfiles);
+//    // Downloads all profiles not in localProfiles
+//    util.pullLoginFiles(localProfiles);
+});
