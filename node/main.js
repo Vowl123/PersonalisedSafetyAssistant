@@ -1,16 +1,33 @@
+const util = require('./util');
+var remote; // This need to be loaded after the database connects
+
 // Wait for database connection
-require('./models').connect(function () {
-    const fs = require('fs');
-    const util = require('./util');
+require('./models')
+    .connect()
+    .then(() => remote = require('./remote'))
+    .then(main);
 
-    const localProfiles = [];
+function main() {
+    // Put program instructions here
+    demo();
+}
 
-//    // TESTING - Creates profile from images in loginFiles/new
-//    const newProfileImages =
-//        fs.readdirSync('../loginFiles/new')
-//        .map(fname => '../loginFiles/new/' + fname);
-//    util.createProfile(newProfileImages);
-
-//    // Downloads all profiles not in localProfiles
-//    util.pullLoginFiles(localProfiles);
-});
+/**
+ * Example / Test
+ * Put some pictures in NEW_USER_PHOTO_PATH and they will be uploaded 
+ * as a new profile, then downloaded again (along with any others) into 
+ * PHOTO_STORE_PATH, an identification index file will be generated at 
+ * USERS_FILE_PATH.
+ */
+function demo() {
+    // Create profile
+    var newUserPhotos = util.readNewUserPhotos();
+    remote.createProfile(newUserPhotos)
+        .then(() => {
+            // Download missing profiles
+            var localProfiles = util.getLocalProfiles();
+            return remote.pullLoginFiles(localProfiles);
+        })
+        .catch(console.error)
+        .then(() => process.exit());
+}

@@ -2,6 +2,7 @@
   "name": "node",
   "version": "1.0.0",
   "author": "David Ralph <David.Ralph@myport.ac.uk>",
+  "main": "main.js",
   "dependencies": {
     "fs": "0.0.1-security",
     "mongoose": "4.7.7",

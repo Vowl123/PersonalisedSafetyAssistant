@@ -9,13 +9,12 @@ const DB_URL = require('./config').DB_URL;
 
 mongoose.Promise = global.Promise;
 
-exports.connect = function (cb) {
+exports.connect = () => {
     console.log('\nConnecting to database at: ' + DB_URL);
-    mongoose.connect(DB_URL).then(startup.bind(null, cb));
+    return mongoose.connect(DB_URL).then(startup);
 };
 
-function startup(cb, err) {
-    if (err) return console.error('Failed to connect to database!\n', err);
+function startup() {
     console.log('Connected successfully');
 
 
@@ -42,7 +41,7 @@ function startup(cb, err) {
     exports.profile = mongoose.model('Profile', profileSchema);
 
 
-    if (typeof cb === 'function') cb();
+    return Promise.resolve;
 }
 
 
