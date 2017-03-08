@@ -1,5 +1,6 @@
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/objdetect/objdetect.hpp"
+#include "personalisedsafetyassistant/cvtutorial.h"
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -18,7 +19,8 @@ Mat captureFrame (VideoCapture capture)
 
 int main()
 {
-	string face_cascade_name = "C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml";
+	cvtutorial a;
+	/*string face_cascade_name = "C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml";
 	CascadeClassifier face_cascade;
 	if( !face_cascade.load( face_cascade_name ) )
 	{ 
@@ -51,7 +53,7 @@ int main()
 		if (faces.empty()) { //no faces are detected
 			key = waitKey(30);
 		} else {
-			if (count < 6){
+			if (count < 5){
 				stringstream name_count;
 				name_count<<++count;
 				fullfile = path + name + name_count.str() + ".jpg";
@@ -65,6 +67,9 @@ int main()
 			key = waitKey(30);
 		}
 	}
-	FR_CSV.close();
+	FR_CSV.close();*/
+	a.TrainingData("C:/database/face/FaceRecognition.txt");
+	a.FRTrain(true);
+	a.FR(false);
 	return 0;
 }
