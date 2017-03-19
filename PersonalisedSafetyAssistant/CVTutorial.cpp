@@ -103,10 +103,10 @@ void cvtutorial::FRTrain(bool saveTrain = false)
 	paras.kernel_type = CvSVM::LINEAR;
 	paras.C = 500;
 	paras.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100000, FLT_EPSILON );
-	SVM.train_auto(DataTrain,label,Mat(),Mat(),paras);
+	SVM.train(DataTrain,label,Mat(),Mat(),paras);
 	if (saveTrain) //Save the SVM training model
 	{
-		SVM.save("C:/Users/Josh/Documents/Visual Studio 2012/CVproject/CVexercise/CVexercise/svmFR.xml");
+		SVM.save("C:/Users/Josh/Documents/Visual Studio 2012/Git/PersonalisedSafetyAssistant/svmFR.xml");
 		FileStorage fs("ID.xml",FileStorage::WRITE); //XML file storage
 		if (!fs.isOpened())
 		{
@@ -121,7 +121,7 @@ void cvtutorial::FR(bool loadSVM)
 {
 	if (loadSVM)
 	{
-		SVM.load("C:/Users/Josh/DocumentsVisual Studio 2012/CVproject/CVexercise/CVexercise/svmFR.xml");
+		SVM.load("C:/Users/Josh/Documents/Visual Studio 2012/Git/PersonalisedSafetyAssistant/svmFR.xml");
 		FileStorage fs("ID.xml", cv::FileStorage::READ); //read data from XML file
 		if (!fs.isOpened())
 		{

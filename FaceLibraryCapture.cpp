@@ -4,9 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include "PersonalisedSafetyAssistant/FaceAnalysis.h"
 using namespace cv;	
 using namespace std;
-bool compareRect(cv::Rect r1, cv::Rect r2) { return r1.height < r2.height; }
+//bool compareRect(cv::Rect r1, cv::Rect r2) { return r1.height < r2.height; }
 Mat captureFrame (VideoCapture capture)
 {
 	Mat frame;
@@ -19,7 +20,8 @@ Mat captureFrame (VideoCapture capture)
 
 int main()
 {
-	cvtutorial a;
+	FaceAnalysis a;
+	//cvtutorial a;
 	/*string face_cascade_name = "C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml";
 	CascadeClassifier face_cascade;
 	if( !face_cascade.load( face_cascade_name ) )
@@ -53,7 +55,7 @@ int main()
 		if (faces.empty()) { //no faces are detected
 			key = waitKey(30);
 		} else {
-			if (count < 5){
+			if (count < 30){
 				stringstream name_count;
 				name_count<<++count;
 				fullfile = path + name + name_count.str() + ".jpg";
@@ -62,7 +64,7 @@ int main()
 				FR_CSV << data_record << endl;
 				imshow("collection",frame);
 				cout << name_count.str() << endl;
-				key = waitKey(60000);
+				key = waitKey(3000);
 			}
 			key = waitKey(30);
 		}
