@@ -21,7 +21,6 @@ Mat captureFrame (VideoCapture capture)
 int main()
 {
 	FaceAnalysis a;
-	//cvtutorial a;
 	/*string face_cascade_name = "C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml";
 	CascadeClassifier face_cascade;
 	if( !face_cascade.load( face_cascade_name ) )
@@ -70,8 +69,17 @@ int main()
 		}
 	}
 	FR_CSV.close();*/
-	a.TrainingData("C:/database/face/FaceRecognition.txt");
-	a.FRTrain(true);
-	a.FR(false);
+	vector<Mat> images;
+	vector<int> labels;
+	try {
+	a.read_csv("C:/database/face/FaceRecognition.txt", images, labels);
+	} catch(cv::Exception& e) {
+		cerr << "Error opening file! Reason:" << e.msg << endl;
+		exit(1);
+	}
+	int imWidth = images[0].cols;
+	int imHeight = images[0].rows;
+	a.FRTrain(images, labels, true);
+	a.FR(false, imWidth, imHeight);
 	return 0;
 }

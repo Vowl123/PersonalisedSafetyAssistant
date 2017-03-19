@@ -9,10 +9,11 @@
 using namespace cv;
 using namespace std;
 
-bool compareRect(cv::Rect r1, cv::Rect r2) { return r1.height < r2.height; }
+//bool compareRect(cv::Rect r1, cv::Rect r2) { return r1.height < r2.height; }
 
-void FaceAnalysis::read_csv(const string& filename, vector<Mat>& images, vector<int>& labels, char separator = ';')
+void FaceAnalysis::read_csv(const string& filename, vector<Mat>& images, vector<int>& labels)
 {
+	char separator = ';';
 	ifstream file(filename.c_str(), ifstream::in);
 	if (!file) {
 		string error_message = "No valid input file was given, please check the given filename.";
@@ -26,25 +27,12 @@ void FaceAnalysis::read_csv(const string& filename, vector<Mat>& images, vector<
 		getline(liness, classlabel);
 		if(!path.empty() && !classlabel.empty()) {
 			images.push_back(imread(path, 0));
-			_labels.push_back(classlabel.c_str());
-			uniq_label.push_back(classlabel.c_str());
-		}
-	}
-	int label_len = _labels.size();
-	vector<string>::iterator iter = unique(uniq_label.begin(),uniq_label.end());
-	uniq_label.erase(iter,uniq_label.end()); 
-	int uniq_len = uniq_label.size();
-	for (int i = 0; i < uniq_len; i++)
-	{
-		for (int j = 0; j < label_len; j++)
-		{ //The format of labels must be int
-			if (_labels[j].compare(uniq_label[i]))
-				labels.push_back(i);
+			labels.push_back(atoi(classlabel.c_str()));
 		}
 	}
 }
 
-Rect FaceAnalysis::FaceDetection(Mat img)
+/*Rect FaceAnalysis::FaceDetection(Mat img)
 {
 	string face_cascade_name = "C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml";
 	CascadeClassifier face_cascade;
@@ -59,9 +47,9 @@ Rect FaceAnalysis::FaceDetection(Mat img)
 		return Rect();
 	Rect faceRect=*max_element(faces.begin(),faces.end(),[](Rect r1, Rect r2) { return r1.height < r2.height; }); //only the largest face bounding box are maintained
 	return faceRect;
-}
+}*/
 
-template <typename _Tp> inline
+/*template <typename _Tp> inline
 	void FaceAnalysis::elbp_(InputArray _src, OutputArray _dst, int radius, int neighbors)
 {
 	//get matrices
@@ -94,9 +82,9 @@ template <typename _Tp> inline
 			}
 		}
 	}
-}
+}*/
 
-void FaceAnalysis::elbp(InputArray src, OutputArray dst, int radius, int neighbors)
+/*void FaceAnalysis::elbp(InputArray src, OutputArray dst, int radius, int neighbors)
 {
 	int type = src.type();
 	switch (type) {
@@ -112,15 +100,15 @@ void FaceAnalysis::elbp(InputArray src, OutputArray dst, int radius, int neighbo
 		CV_Error(CV_StsNotImplemented, error_msg);
 		break;
 	}
-}
+}*/
 
-Mat FaceAnalysis::elbp(InputArray src, int radius, int neighbors) {
+/*Mat FaceAnalysis::elbp(InputArray src, int radius, int neighbors) {
 	Mat dst;
 	elbp(src, dst, radius, neighbors);
 	return dst;
-}
+}*/
 
-Mat FaceAnalysis::histc(InputArray src)
+/*Mat FaceAnalysis::histc(InputArray src)
 {
 	static int uniform[256] = {
 		0,1,2,3,4,58,5,6,7,58,58,58,8,58,9,10,11,58,58,58,58,58,58,58,12,58,58,58,13,58,
@@ -146,9 +134,9 @@ Mat FaceAnalysis::histc(InputArray src)
 		}
 	}
 	return result;
-}
+}*/
 
-Mat FaceAnalysis::spatial_histogram(Mat src, int numPatterns,
+/*Mat FaceAnalysis::spatial_histogram(Mat src, int numPatterns,
 	int grid_x, int grid_y)
 {
 	int width = src.cols/grid_x;
@@ -172,9 +160,9 @@ Mat FaceAnalysis::spatial_histogram(Mat src, int numPatterns,
 		}
 	}
 	return result.reshape(1,1);
-}
+}*/
 
-void FaceAnalysis::TrainingData(const string& filename) //filename is the path and name of CSV file
+/*void FaceAnalysis::TrainingData(const string& filename) //filename is the path and name of CSV file
 {
 	vector<Mat> images;
 	vector<int> _labels;
@@ -200,58 +188,79 @@ void FaceAnalysis::TrainingData(const string& filename) //filename is the path a
 		Mat trainSample_row = trainSample.row(i);
 		hist.copyTo(trainSample_row);
 	}
-}
+}*/
 
-void FaceAnalysis::FRTrain(bool saveTrain = false)
+void FaceAnalysis::FRTrain(vector<Mat> images, vector<int> labels, bool saveTrain = false)
 {
-	CvSVMParams paras;
-	paras.svm_type = CvSVM::C_SVC;
-	paras.kernel_type = CvSVM::LINEAR;
-	paras.C = 500;
-	paras.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100000, FLT_EPSILON );
-	SVM.train_auto(trainSample,label,Mat(),Mat(),paras);
+	//CvSVMParams paras;
+	//paras.svm_type = CvSVM::C_SVC;
+	//paras.kernel_type = CvSVM::LINEAR;
+	//paras.C = 500;
+	//paras.term_crit = cvTermCriteria(CV_TERMCRIT_ITER, 100000, FLT_EPSILON );
+	//SVM.train_auto(trainSample,label,Mat(),Mat(),paras);
+	FFR = createFisherFaceRecognizer();
+	FFR->train(images, labels);
 	if (saveTrain) //Save the SVM training model
 	{
-		SVM.save("C:/Users/Josh/Documents/Visual Studio 2012/Git/PersonalisedSafetyAssistant/svmFR.xml");
-		FileStorage fs("C:/Users/Josh/Documents/Visual Studio 2012/Git/PersonalisedSafetyAssistant/ID.xml",FileStorage::WRITE); //XML file storage
+		FFR->save("svmFR.xml");
+		/*FileStorage fs("ID.xml",FileStorage::WRITE); //XML file storage
 		if (!fs.isOpened())
 		{
 			cerr<<"failed to open "<<endl;
 		}
 		write(fs, "IDno", uniq_label);
-		fs.release();
+		fs.release();*/
 	}
 }
 
-void FaceAnalysis::FR(bool loadSVM)
+void FaceAnalysis::FR(bool loadFFR, int imWidth, int imHeight)
 {
-	if (loadSVM)
+	if (loadFFR)
 	{
-		SVM.load("C:/Users/Josh/Documents/Visual Studio 2012/Git/PersonalisedSafetyAssistant/svmFR.xml");
-		FileStorage fs("C:/Users/Josh/Documents/Visual Studio 2012/Git/PersonalisedSafetyAssistant/ID.xml", cv::FileStorage::READ); //read data from XML file
-		if (!fs.isOpened())
-		{
-			cerr<<"failed to open "<<endl;  
-		}
-		FileNode IDnode = fs["IDno"];
-		read(IDnode, uniq_label);
-		fs.release();
+		FFR->load("svmFR.xml");
 	}
+	CascadeClassifier haarCascade;
+	haarCascade.load("C:/opencv/sources/data/haarcascades/haarcascade_frontalface_default.xml");
 	VideoCapture capture(0);
 	if ( !capture.isOpened() )  // if not success, exit program
 	{
 		cout << "Cannot open the camera" << endl;
 		exit(0);
 	}
-	Mat frame,Gray_img;
+	Mat frame;
+	/*Mat frame,Gray_img;
 	Rect faceRect;
 	int id;
-	namedWindow("FaceRecognition", CV_WINDOW_AUTOSIZE);
+	namedWindow("FaceRecognition", CV_WINDOW_AUTOSIZE);*/
 	char key = 0;
 	while(key != 27) //press "Esc" to stop
 	{
 		capture>>frame;
-		faceRect = FaceAnalysis::FaceDetection(frame);
+		Mat original = frame.clone();
+		//Convert to grayscale
+		Mat gray;
+		cvtColor(original, gray, CV_BGR2GRAY);
+		//Find faces 
+		vector< Rect_<int>> faces;
+		haarCascade.detectMultiScale(gray, faces);
+		for (int i = 0; i < faces.size(); i++) {
+			//Process each face individually
+			Rect face_i = faces[i];
+			//Crop the face
+			Mat face = gray(face_i);
+			//Resize the face
+			Mat face_resized;
+			cv::resize(face, face_resized, Size(imWidth, imHeight), 1.0, 1., INTER_CUBIC);
+			//Predict which class the face is
+			int prediction = FFR->predict(face_resized);
+			//Write prediction on image
+			rectangle(original, face_i, CV_RGB(0, 255, 0), 1);
+			string box_text = format("Prediction = %d", prediction);
+			int pos_x = std::max(face_i.tl().x - 10, 0);
+			int pos_y = std::max(face_i.tl().y - 10, 0);
+			putText(original, box_text, Point(pos_x, pos_y), FONT_HERSHEY_PLAIN, 1.0, CV_RGB(0, 255, 0), 2.0);
+		}
+		/*faceRect = FaceAnalysis::FaceDetection(frame);
 		if (faceRect.width == 0)
 		{
 			imshow("FaceRecognition",frame);
@@ -267,7 +276,8 @@ void FaceAnalysis::FR(bool loadSVM)
 		string text = uniq_label[id];
 		rectangle(frame,faceRect,Scalar(0,0,255));
 		putText(frame, text, Point(faceRect.x+2,faceRect.y+12), CV_FONT_HERSHEY_COMPLEX, 0.5, cvScalar(255, 255, 0)); // overlay text
-		imshow("FaceRecognition",frame);
+		*/
+		imshow("FaceRecognition",original);
 		key=waitKey(10);
 	}
 } 
